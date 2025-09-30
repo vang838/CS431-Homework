@@ -1,7 +1,9 @@
 structure R = Random
-(* val globalGenerator = R.rand(Time.now(), 0) used for testing *)
-val seed1 = Random.rand(0,0) 
-val globalGenerator = R.rand(seed1, 0)
+
+(* used for testing *)
+(* val globalGenerator = R.rand(42, 99)  *)
+val now = Time.toMilliseconds Time.now ()
+val globalGenerator = R.rand(now, 0) 
 
 fun rollDice () = ((R.randInt globalGenerator) mod 6) + 1 
 
