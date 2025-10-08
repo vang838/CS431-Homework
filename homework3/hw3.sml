@@ -54,3 +54,11 @@ fun allTrue (conds : (event -> bool) list) (e : event) =
     case conds of
         [] => true
         | (f:fs) => (f e) andalso (allTrue fs e);
+
+val event1 : event = ("Workshop", 120, 25, 300);
+val event2 : event = ("Seminar", 45, 80, 200);
+val event3 : event = ("Hackathon", 480, 150, 1000);
+val ruleSet1 = [longerThan 60, costBetween 0 500];
+val ruleSet2 = [isLargeEvent, costBetween 800 2000];
+val _ = print ("RuleSet1 on Workshop: " ^
+Bool.toString (allTrue ruleSet1 event1) ^ "\n");
