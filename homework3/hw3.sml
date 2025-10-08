@@ -21,8 +21,8 @@ fun getCost(e : event) =
 fun isShortEvent(e : event) =
     getDuration e < 60
 
-fun isLongEvent(e : event) =
-    getDuration e > 60
+fun isLargeEvent(e : event) =
+    getAttendees e > 50
 
 fun isLowCost (e : event) =
     getCost e < 100
@@ -53,12 +53,22 @@ fun costBetween(low : int) (high : int ) : event -> bool =
 fun allTrue (conds : (event -> bool) list) (e : event) =
     case conds of
         [] => true
-        | (f:fs) => (f e) andalso (allTrue fs e);
+        | (f::fs) => (f e) andalso (allTrue fs e);
 
+(* Tests copied from hw3 pdf *)
 val event1 : event = ("Workshop", 120, 25, 300);
 val event2 : event = ("Seminar", 45, 80, 200);
 val event3 : event = ("Hackathon", 480, 150, 1000);
+
 val ruleSet1 = [longerThan 60, costBetween 0 500];
 val ruleSet2 = [isLargeEvent, costBetween 800 2000];
+val ruleSet3 = [fewerThan 200, isLargeEvent, costBetween 500 1500];
+
 val _ = print ("RuleSet1 on Workshop: " ^
-Bool.toString (allTrue ruleSet1 event1) ^ "\n");
+    Bool.toString (allTrue ruleSet1 event1) ^ "\n");
+
+val _ = print ("RuleSet2 on Seminar: " ^
+    Bool.toString (allTrue ruleSet2 event2) ^ "\n");
+
+val _ = print ("RuleSet3 on Hackathon: " ^
+    Bool.toString (allTrue ruleSet3 event3) ^ "\n");
