@@ -32,65 +32,69 @@ object Main {
     val ration = Item("ration", "Ration Bar", "A vacuum-sealed nutritious bar found from the crash site.  Restore hunger")
     val humanArm = Item("arm", "Severed Arm", "The arm of your crewmate, Matthew. Sometimes I feel like I see his fingers move.")
     val battery = Item("battery", "Power Cell", "A heavy, radioactive battery scavenged from the ship's core")
-    val alienArtifact = Item("artifact", "Glowing Orb", "It hums with mysterious energy.  A hole in the ship looks to be the same size as the orb")
     val cookedMeat = Item("meat", "Cooked Steak", "It looks similar to a medium rare steak back on Earth")
+    val scrap = Item("scrap", "Scrap Metal", "Twisted metal from the ship's hull. Useless.")
+    val canister = Item("canister", "Empty Canister", "A crushed gas canister. It smells faintly of ozone.")
+    val shard = Item("shard", "Crystal Shard", "A sharp piece of crystal that hums slightly.")
+    val moss = Item("moss", "Glowing Moss", "It emits a soft, soothing light.")
+    val gear = Item("gear", "Rusted Gear", "An ancient cog, seized by time.")
+    val ruinsKey = Item("ruins_key", "Ancient Key", "A stone tablet with a pulsing rune. It looks like it fits a large door.")
+
 
     val robot = NPC(
       id = "robot",
       name = "Unit 902",
       dialogue = Map(
-        "default" -> "BEEP. BEEP. BOOP. ERROR DETECTED: CRASH DATA CORRUPTED. POWER CELL REQUIRED FOR NAVIGATION",
-        "helped_robot" -> "BEEP. BEEP. BEEP. SYSTEMS ONLINE. THANK YOU, LIFEFORM. ANALYZING TERRAIN...  ANALYZING TERRAIN...  TERRAIN ANALYZED: GO NORTH TO FIND CIVILIZATION"
+        "default" -> "BEEP. BEEP. BOOP. WARNING: LOW BATTERY. POWER CELL REQUIRED FOR MEMORY RECOVERY",
+        "helped_robot" -> "BOOP. BEEP. BEEP. POWER RESTORED. \nMEMORY ACCESS: ADVANCED FACILITY LOCATED NORTH OF CRYSTAL CAVE.\nTAKE THIS ORGANIC MATTER AS GRATITUDE, USEFUL FOR DISTRACTING CREATURES",
       ),
       itemWanted = Some("battery"),
-      rewardItem = Some(alienArtifact)
+      rewardItem = Some(cookedMeat)
     )
 
     val travelingTrader = NPC(
       id = "trader",
       name = "Traveling Merchant",
       dialogue = Map(
-        "default" -> "Greetings, Ugly Creature!  I collect organic materials.  Do you have anything of interest?",
-        "helped_trader" -> "Oh, what a delicious-- I mean, fascinating item!  Here, take this battery I found"
+        "default" -> "I saw your ship come down! Terrible... simply terrible.\nSince you're in a pickle, I trade you an item for rare organic parts.\nIs that an... arm?",
+        "helped_trader" -> "Oh, what a delicious-- I mean, fine addition to my collection!  Here, take this battery I found"
       ),
       itemWanted = Some("arm"),
-      rewardItem = Some(cookedMeat)
+      rewardItem = Some(battery)
     )
 
     val rooms = Map(
       "crash_site" -> Room(
         "crash_site", "Crash Site", "Smoke rises from the twisted metal of your ship. Your crew is dead.",
         Map("north" -> "gas_field"),
-        List(ration, ration, humanArm) // 2 rations, 1 arm
+        List(ration, ration, humanArm, scrap),
+        npcs = List(travelingTrader)
       ),
       "gas_field" -> Room(
         "gas_field", "Sulfuric Fields", "Yellow gas swirls around your ankles. It burns your lungs to breathe here.",
-        Map("south" -> "crash_site", "north" -> "ruins", "east" -> "cave"),
-        List()
+        Map("south" -> "crash_site", "north" -> "ruins_entrance", "east" -> "cave"),
+        List(canister),
+        npcs = List(robot)
       ),
       "cave_entrance" -> Room(
         "cave_entrance", "Crystal Cave", "A dark opening in the rocks. The air is much cooler here",
         Map("west" -> "gas_field", "east" -> "cave"),
-        List(battery),
-        npcs = List(travelingTrader) // Trader starts here but moves
+        List(shard),
       ),
       "cave" -> Room(
         "cave", "Crystal Cave", "The air is clear here. Crystals illuminate the walls.",
         Map("west" -> "cave_entrance"),
-        List(battery),
-        npcs = List(travelingTrader) // Trader starts here but moves
+        List(moss)
       ),
       "ruins_entrance" -> Room(
         "ruins_entrance", "Ancient Gates", "Giant rusted pillars mark the entrance to an old city.",
         Map("south" -> "gas_field", "north" -> "ruins_hall"),
-        List(),
-        npcs = List(robot)
+        List(gear)
       ),
       "ruins_hall" -> Room(
         "ruins", "Alien Ruins", "A long corridor with strange writing on the walls.  Possibly the language of a past civilization.",
         Map("south" -> "ruins_entrance", "north" -> "ruins"),
-        List(),
-        npcs = List(robot)
+        List(ruinsKey)
       ),
       "control_room" -> Room(
         "control_room", "Signal Control Center", "Advanced machinery that looks left behind by an advanced civilization.  It looks like there is a machine to signal back Earth for help",
@@ -148,10 +152,10 @@ object Main {
       case "inventory" :: Nil | "i" :: Nil => Inventory
       case "help" :: Nil => Help
       case "go" :: dir :: Nil => Move(dir)
-      case "n" :: Nil | "north" :: Nil => Move("north")
-      case "s" :: Nil | "south" :: Nil => Move("south")
-      case "e" :: Nil | "east" :: Nil => Move("east")
-      case "w" :: Nil | "west" :: Nil => Move("west")
+      case "move n" :: Nil | "north" :: Nil => Move("north")
+      case "move s" :: Nil | "south" :: Nil => Move("south")
+      case "move e" :: Nil | "east" :: Nil => Move("east")
+      case "move w" :: Nil | "west" :: Nil => Move("west")
       case "take" :: itemWords => Take(itemWords.mkString(" "))
       case "use" :: itemWords => Use(itemWords.mkString(" "))
       case "talk" :: npcWords => Talk(npcWords.mkString(" ").stripPrefix("to ").trim)
@@ -185,9 +189,9 @@ object Main {
       case Move(direction) => handleMove(state, direction)
 
       case Take(itemName) =>
-        currentRoom.items.find(_.name.toLowerCase == itemName) match {
+        currentRoom.items.find(i => i.name.toLowerCase == itemName || i.id == itemName) match {
           case Some(item) =>
-            val newRoom = currentRoom.copy(items = currentRoom.items.filterNot(_ == item))
+            val newRoom = currentRoom.copy(items = currentRoom.items diff List(item))
             val newWorld = state.world + (state.currentRoomID -> newRoom)
             state.copy(world = newWorld, inventory = item :: state.inventory, message = s"Taken: ${item.name}")
           case None =>
@@ -195,7 +199,7 @@ object Main {
         }
 
       case Use(itemName) =>
-        state.inventory.find(_.name.toLowerCase == itemName) match {
+        state.inventory.find(i => i.name.toLowerCase == itemName || i.id == itemName) match {
           case Some(item) =>
             if (item.id == "ration") {
               val newInv = state.inventory.filterNot(_ == item)
@@ -214,7 +218,7 @@ object Main {
         }
 
       case Talk(npcName) =>
-        currentRoom.npcs.find(_.name.toLowerCase.contains(npcName)) match {
+        currentRoom.npcs.find(n => n.name.toLowerCase.contains(npcName) || n.id == npcName ) match {
           case Some(npc) =>
             val key = if (state.flags.contains(s"helped_${npc.id}")) s"helped_${npc.id}" else "default"
             val diag = npc.dialogue.getOrElse(key, "...")
@@ -224,7 +228,7 @@ object Main {
 
       case Give(npcName, itemName) =>
         val npcOpt = currentRoom.npcs.find(_.name.toLowerCase.contains(npcName))
-        val itemOpt = state.inventory.find(_.name.toLowerCase.contains(itemName))
+        val itemOpt = state.inventory.find(i => i.name.toLowerCase.contains(itemName) || i.id == itemName)
 
         (npcOpt, itemOpt) match {
           case (Some(npc), Some(item)) if npc.itemWanted.contains(item.id) =>
@@ -283,28 +287,27 @@ object Main {
       case Some(nextId) =>
         // Move north runs into troll
         if (state.currentRoomID == "cave" && direction == "north") {
-          state.inventory.find(_.id == "meat") match {
-            case Some(meatItem) =>
-              // Success: Troll distracted -> WIN CONDITION
-              val nextRoom = state.world(nextId)
-              val newInv = state.inventory.filterNot(_ == meatItem)
+          val hasMeat = state.inventory.exists(_.id == "meat")
+          val hasKey = state.inventory.exists(_.id == "ruins_key")
+          if( hasMeat && hasKey ) {
+            val meatItem = state.inventory.find(_.id == "meat").get
+            val nextRoom = state.world(nextId)
+            val newInv = state.inventory.filterNot(_ == meatItem)
 
-              // We combine the move AND the win message here
-              state.copy(
-                currentRoomID = nextId,
-                inventory = newInv,
-                isFinished = true, // End the game successfully
-                message = s"You toss the Cooked Steak to the side. The Troll lunges for it, ignoring you completely!\n" +
-                  s"You sneak past into the [${nextRoom.name}].\n\n" +
-                  s"CONGRATULATIONS!\nYou enter the Signal Control Center and power up the ancient beacon.\n" +
-                  s"A rescue ship acknowledges your signal. You have saved the mission!\n\nTHE END."
-              )
-
-            case None =>
-              // Failure: Blocked
-              state.copy(message = "A massive Alien Troll is sleeping in front of the north exit! You can't get past without distracting it with food...")
+            state.copy(
+              currentRoomID = nextId,
+              inventory = newInv,
+              isFinished = true, // End the game successfully
+              message = s"You toss the Cooked Steak to the side. The Troll lunges for it, ignoring you completely!\n" +
+                s"You sneak past into the [${nextRoom.name}].\n\n" +
+                s"CONGRATULATIONS!\nYou enter the Signal Control Center and power up the ancient beacon.\n" +
+                s"A rescue ship acknowledges your signal. You have saved the mission!\n\nTHE END."
+            )
           }
-        }
+            else if( hasMeat ) { state.copy(message = "You see the massive Troll and the locked door behind it.  You have the steak to distract the troll, but you see a keyhole on the door.  You won't be able to enter without the key, maybe explore the rest of the map to find some sort of ruins")}
+
+            else { state.copy(message = "A massive Troll is sleeping in front of the north exit! You can't get past without distracting it with food...") }
+          }
         // Basic Movement
         else {
           val nextRoom = state.world(nextId)
