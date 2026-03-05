@@ -19,5 +19,19 @@ fun playGame position board =
                 if newPosition < List.length board then List.nth(board, newPosition)
                 else 0
             
+            val finalPosition = newPosition + distanceToFinalPosition
             
+            val _ =
+                if adjustment = 0 then 
+                    print("You move to square " ^Int.toString newPosition^ ".\n")
+                else if adjustment > 0 then
+                    print("You hit a ladder!  You move forward " ^Int.toString distanceToFinalPosition^ "spaces\n")
+                else
+                    print("Snake!  You move backward " ^Int.toString ~distanceToFinalPosition^ "spaces\n")
+                
+        in
+            playGame finalPosition board
+        end
+
+val _ = playGame 0
 
