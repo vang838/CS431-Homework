@@ -13,4 +13,11 @@ fun playGame position board =
 
             val roll = rollDie()
             val _ = print("You rolled a " ^Int.toString roll^ "!\n")
+            
+            val newPosition = position+roll
+            val distanceToFinalPosition = 
+                if newPosition < List.length board then List.nth(board, newPosition)
+                else 0
+            
+            
 
