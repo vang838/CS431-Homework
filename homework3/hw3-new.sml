@@ -20,3 +20,6 @@ fun getCost(e:event) =
     in cost
     end;
 
+fun isShortEvent(e:event) =
+    getDuration e < 60
+
