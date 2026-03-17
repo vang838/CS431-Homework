@@ -38,3 +38,15 @@ fun orCond(f:event -> bool)(g:event -> bool) =
 fun notCond(f:event -> bool) =
     fn(e:event) => not(fe)
 
+(* Tests copied from hw3 pdf *)
+val event1 : event = ("Workshop", 120, 25, 300);
+val event2 : event = ("Seminar", 45, 80, 200);
+
+val ruleSet1 = [longerThan 60, costBetween 0 500];
+val ruleSet2 = [isLargeEvent, costBetween 800 2000];
+
+val _ = print ("RuleSet1 on Workshop: " ^
+    Bool.toString (allTrue ruleSet1 event1) ^ "\n");
+
+val _ = print ("RuleSet2 on Seminar: " ^
+    Bool.toString (allTrue ruleSet2 event2) ^ "\n");
