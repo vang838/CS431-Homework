@@ -23,3 +23,9 @@ fun getCost(e:event) =
 fun isShortEvent(e:event) =
     getDuration e < 60
 
+fun isLargeEvent(e:event) =
+    getAttendees e > 50
+
+fun isLowCost(e:event) =
+    getCost e > 500
+
