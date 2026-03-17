@@ -29,3 +29,12 @@ fun isLargeEvent(e:event) =
 fun isLowCost(e:event) =
     getCost e > 500
 
+fun andCond(f:event -> bool)(g:event -> bool) =
+    fn(e:event) => f e andalso g e;
+
+fun orCond(f:event -> bool)(g:event -> bool) =
+    fn(e:event) => f e orelse f g 
+
+fun notCond(f:event -> bool) =
+    fn(e:event) => not(fe)
+
