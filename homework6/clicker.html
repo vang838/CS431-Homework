@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Click Counter · Event-Driven JavaScript · SOLUTION</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            transition: all 0.2s ease;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        /* Light theme (default) */
+        body.light {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+        }
+        
+        body.light .container {
+            background: white;
+            color: #333;
+        }
+        
+        /* Dark theme */
+        body.dark {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #eee;
+        }
+        
+        body.dark .container {
+            background: #2d2d3d;
+            color: #eee;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+        }
+        
+        body.dark button {
+            background: #4a4a5a;
+            color: white;
+        }
+        
+        body.dark button:hover {
+            background: #5a5a6a;
+        }
+        
+        body.dark .history {
+            background: rgba(255,255,255,0.1);
+        }
+        
+        .container {
+            max-width: 500px;
+            width: 90%;
+            padding: 40px;
+            border-radius: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+            text-align: center;
+        }
+        
+        h1 {
+            font-size: 1.8rem;
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            color: #888;
+            margin-bottom: 30px;
+            font-size: 0.9rem;
+        }
+        
+        body.dark .subtitle {
+            color: #aaa;
+        }
+        
+        .counter {
+            font-size: 5rem;
+            font-weight: bold;
+            margin: 20px 0;
+            padding: 20px;
+            border-radius: 20px;
+            background: rgba(102, 126, 234, 0.1);
+        }
+        
+        .counter.highlight {
+            background: #ffd700;
+            color: #333;
+            transform: scale(1.05);
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        
+        button {
+            padding: 12px 24px;
+            font-size: 1rem;
+            font-weight: bold;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            background: #667eea;
+            color: white;
+            transition: transform 0.1s;
+        }
+        
+        button:hover {
+            opacity: 0.9;
+        }
+        
+        button:active {
+            transform: scale(0.95);
+        }
+        
+        .btn-reset {
+            background: #dc3545;
+        }
+        
+        .btn-theme {
+            background: #28a745;
+        }
+        
+        .history {
+            margin-top: 30px;
+            padding: 20px;
+            border-radius: 15px;
+            background: rgba(0,0,0,0.05);
+        }
+        
+        .history h3 {
+            margin-bottom: 10px;
+            font-size: 1rem;
+        }
+        
+        .history-value {
+            font-family: monospace;
+            font-size: 1.1rem;
+            word-break: break-word;
+        }
+        
+        footer {
+            margin-top: 30px;
+            font-size: 0.7rem;
+            opacity: 0.6;
+        }
+        
+        /* Bonus: Keyboard hint */
+        .keyboard-hint {
+            margin-top: 15px;
+            font-size: 0.8rem;
+            padding: 8px;
+            background: rgba(102, 126, 234, 0.2);
+            border-radius: 20px;
+            display: inline-block;
+        }
+        
+        body.dark .keyboard-hint {
+            background: rgba(102, 126, 234, 0.3);
+        }
+    </style>
+</head>
+<body class="light">
+    <div class="container">
+        <h1>🖱️ Interactive Click Counter</h1>
+        <div class="subtitle">Event-Driven JavaScript | Functional Style</div>
+        
+        <!-- Counter display -->
+        <div class="counter" id="counterDisplay">0</div>
+        
+        <!-- Buttons -->
+        <div class="button-group">
+            <button id="incrementBtn">➕ Increment</button>
+            <button id="decrementBtn" class="btn-reset" style="background: #ff9800;">➖ Decrement</button>
+            <button id="resetBtn" class="btn-reset">🔄 Reset</button>
+            <button id="themeBtn" class="btn-theme">🌙 Dark Mode</button>
+        </div>
+        
+        <!-- History display -->
+        <div class="history">
+            <h3>📜 Click History (last 5)</h3>
+            <div class="history-value" id="historyDisplay">(no clicks yet)</div>
+        </div>
+        
+        <footer>
+            Every click triggers an event | Counter highlights at multiples of 10
+        </footer>
+    </div>
+    
+    <script>
+        // ============================================================
+        // STATE (mutable for simplicity, but updates triggered by events)
+        // ============================================================
+        let count = 0;
+        let history = [];        // Stores last 5 click values
+        let currentTheme = 'light';
+        
+        // ============================================================
+        // DOM Element References (will be set in init())
+        // ============================================================
+        let counterDisplay;
+        let historyDisplay;
+        let incrementBtn;
+        let decrementBtn;
+        let resetBtn;
+        let themeBtn;
+        
+        // ============================================================
+        // PURE FUNCTIONS (no side effects)
+        // TODO: Implement these
+        // ============================================================
+        
+        /**
+         * Formats history array into a readable string
+         * @param {number[]} historyArray - Array of click values
+	 * @returns {string} Formatted string like "1 -> 2 -> 3"
+         */
+        function formatHistory(historyArray) {
+            // TODO: If history is empty, return "(no clicks yet)"
+	    // TODO: Otherwise, join numbers with " -> " (arrow symbol)
+            // Write your code here
+            if(historyArray.length === 0) { return "(no clicks yet)"; }
+
+            return historyArray.join(" -> ")
+        }
+        
+        /**
+         * Checks if a number is a multiple of 10
+         * @param {number} num - The number to check
+         * @returns {boolean} True if num % 10 === 0 and num !== 0
+         */
+        function isMultipleOfTen(num) {
+            // TODO: Return true if num is a multiple of 10 and not zero
+            // HINT: Use the modulo operator (%)
+            return num !== 0 && num % 10 === 0;
+        }
+        
+        // ============================================================
+        // SIDE EFFECT FUNCTIONS (DOM updates)
+        // TODO: Implement these
+        // ============================================================
+        
+        /**
+         * Updates the counter display element
+         */
+        function updateCounterDisplay() {
+            // TODO: Set counterDisplay.textContent to the current count
+            counterDisplay.textContent = count;
+        }
+        
+        /**
+         * Updates the history display element
+         */
+        function updateHistoryDisplay() {
+            // TODO: Use formatHistory(history) to get the formatted string
+            // TODO: Set historyDisplay.textContent to that string
+            historyDisplay.textContent = formatHistory(history);
+        }
+        
+        /**
+         * Adds highlight effect to counter (temporary)
+         */
+        function highlightCounter() {
+            // TODO: Add class 'highlight' to counterDisplay
+            // TODO: Use setTimeout to remove the class after 300ms
+            // HINT: counterDisplay.classList.add('highlight')
+            // HINT: setTimeout(() => { ... }, 300)
+            counterDisplay.classList.add('highlight');
+
+            setTimeout(() => {
+                counterDisplay.classList.remove('highlight');
+            }, 300);
+        }
+        
+        // ============================================================
+        // EVENT HANDLERS
+        // TODO: Implement these
+        // ============================================================
+        
+        /**
+         * Handles increment button click
+         */
+        function increment() {
+            // TODO: Increase count by 1
+            // TODO: Add the new count to history (unshift, then keep only last 5)
+            // HINT: history.unshift(count); if (history.length > 5) history.pop();
+            // TODO: Update counter display
+            // TODO: Update history display
+            // TODO: If isMultipleOfTen(count) is true, call highlightCounter()
+            count = count + 1;
+            history.unshift(count);
+            if(history.length > 5 ) { history.pop(); }
+
+            updateCounterDisplay();
+            updateHistoryDisplay();
+
+            if(isMultipleOfTen(count)) { highlightCounter(); }
+        }
+
+        /**
+         * Handles decrement button click (Bonus)
+         */
+        function decrement() {
+	    // TODO: similar to increment function
+            count = count - 1;
+            history.unshift(count);
+            if(history.length > 5 ) { history.pop(); }
+
+            updateCounterDisplay();
+            updateHistoryDisplay();
+
+            if(isMultipleOfTen(count)) { highlightCounter(); }
+        }
+        
+        /**
+         * Handles reset button click
+         */
+        function reset() {
+            // TODO: Set count = 0
+            // TODO: Clear history array (history = [])
+            // TODO: Update counter display
+            // TODO: Update history display
+            count = 0;
+            history = [];
+            updateCounterDisplay();
+            updateHistoryDisplay();
+        }
+        
+        /**
+         * Handles theme toggle button click
+         */
+        function toggleTheme() {
+            // TODO: Check currentTheme value
+            // TODO: If 'light', switch to 'dark' and update button text
+            // TODO: If 'dark', switch to 'light' and update button text
+            // TODO: Set document.body.className = currentTheme
+            if(currentTheme === 'light') {
+                currentTheme = 'dark';
+                themeBtn.textContent = "Light Mode"
+            }
+
+            else {
+                currentTheme = 'light';
+                themeBtn.textContent = "Dark Mode"
+            }
+
+            document.body.className = currentTheme;
+        }
+        
+        // ============================================================
+        // INITIALIZATION
+        // TODO: Complete these
+        // ============================================================
+        
+        /**
+         * Gets DOM element references
+         */
+        function getElementReferences() {
+            // TODO: Use document.getElementById() to get:
+            // counterDisplay, historyDisplay, incrementBtn, resetBtn, themeBtn
+            counterDisplay = document.getElementById('counterDisplay');
+            historyDisplay = document.getElementById('historyDisplay');
+            incrementBtn = document.getElementById('incrementBtn');
+            decrementBtn = document.getElementById('decrementBtn');
+            resetBtn = document.getElementById('resetBtn');
+            themeBtn = document.getElementById('themeBtn');
+        }
+        
+        /**
+         * Attaches event listeners to buttons
+         */
+        function initEventListeners() {
+            // TODO: Add click event listeners to:
+            // incrementBtn -> increment
+            // resetBtn -> reset
+            // themeBtn -> toggleTheme
+            incrementBtn.addEventListener('click', increment);
+            decrementBtn.addEventListener('click', decrement);
+            resetBtn.addEventListener('click', reset);
+            themeBtn.addEventListener('click', toggleTheme);
+        }
+        
+        /**
+         * Initializes the application
+         */
+        function init() {
+            getElementReferences();
+            initEventListeners();
+            updateCounterDisplay();
+            updateHistoryDisplay();
+        }
+        
+        // Start the app when page loads
+        window.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
+
