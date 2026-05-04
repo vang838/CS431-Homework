@@ -1,0 +1,5 @@
+JS event handlers are similar to callbacks in functional programming because both pass a function that are not executed at page load.
+For example, functions increment/reset/toggleTheme are not called directly and are attached to buttons that execute the function when the user interacts with a button.
+
+The main difference is that JS event handlers cause side effects like a user interacting with the increment button and the count variable being adjusted.
+Callbacks in functional programming try to avoid side effects by returning a new state rather than modifying the existing state.
